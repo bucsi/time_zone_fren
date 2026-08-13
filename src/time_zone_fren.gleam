@@ -2,6 +2,7 @@ import gleam/dynamic/decode
 import gleam/float
 import gleam/int
 import gleam/list
+import gleam/time/duration
 import gleam/time/timestamp.{type Timestamp}
 import lustre
 import lustre/attribute
@@ -18,6 +19,8 @@ import time_zone_fren/weekday
 
 const tick_interval_ms: Int = 60_000
 
+const recenter_buffer_minutes: Int = 180
+
 pub fn main() -> Nil {
   let app = lustre.application(init, update, view)
   let assert Ok(_) = lustre.start(app, "#app", Nil)
@@ -25,7 +28,12 @@ pub fn main() -> Nil {
 }
 
 pub type Model {
-  Model(locations: List(Location), selected: Timestamp, now: Timestamp)
+  Model(
+    locations: List(Location),
+    selected: Timestamp,
+    now: Timestamp,
+    focal: Timestamp,
+  )
 }
 
 pub type Msg {
@@ -36,19 +44,41 @@ pub type Msg {
 
 fn init(_flags: Nil) -> #(Model, Effect(Msg)) {
   let now = timestamp.system_time()
-  let model = Model(locations: location.defaults(), selected: now, now:)
+  let model =
+    Model(locations: location.defaults(), selected: now, now:, focal: now)
   #(model, tick_every_minute())
 }
 
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   case msg {
     SelectAt(x) -> {
-      let timeline = tl.view(from: model.selected)
+      let timeline = tl.view(from: model.focal)
       let snapped = timeline |> tl.snapped_instant_at(x)
-      #(Model(..model, selected: snapped), effect.none())
+      let new_focal =
+        timestamp.add(
+          model.focal,
+          duration.minutes(edge_shift(timeline, snapped)),
+        )
+      #(Model(..model, selected: snapped, focal: new_focal), effect.none())
     }
-    GoToNow -> #(Model(..model, selected: model.now), effect.none())
-    Tick(new_now) -> #(Model(..model, now: new_now), effect.none())
+    GoToNow -> #(
+      Model(..model, selected: model.now, focal: model.now),
+      effect.none(),
+    )
+    Tick(new_now) -> #(
+      Model(..model, now: new_now, focal: new_now),
+      effect.none(),
+    )
+  }
+}
+
+fn edge_shift(timeline: Timeline, instant: Timestamp) -> Int {
+  let to_start = tl.minutes_between(timeline.start, instant)
+  let to_end = tl.minutes_between(instant, timeline.end)
+  case to_start < recenter_buffer_minutes, to_end < recenter_buffer_minutes {
+    True, _ -> to_start - recenter_buffer_minutes
+    _, True -> recenter_buffer_minutes - to_end
+    _, _ -> 0
   }
 }
 
@@ -63,7 +93,7 @@ fn tick_every_minute() -> Effect(Msg) {
 }
 
 fn view(model: Model) -> Element(Msg) {
-  let timeline = tl.view(from: model.selected)
+  let timeline = tl.view(from: model.focal)
   html.div([], [header_view(), timeline_view(timeline, model)])
 }
 
