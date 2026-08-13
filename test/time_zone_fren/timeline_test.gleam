@@ -99,8 +99,7 @@ pub fn snap_exact_multiple_is_unchanged_test() {
   let timeline = reference_timeline()
   let three_snap_units_in_pixels =
     pixels_for_minutes(int.to_float(tl.snap_minutes * 3))
-  let snapped =
-    timeline |> tl.snapped_instant_at(three_snap_units_in_pixels)
+  let snapped = timeline |> tl.snapped_instant_at(three_snap_units_in_pixels)
   assert_same_instant(
     snapped,
     timestamp.add(timeline.start, duration.minutes(tl.snap_minutes * 3)),

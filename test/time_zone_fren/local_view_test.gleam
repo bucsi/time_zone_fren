@@ -191,8 +191,7 @@ pub fn hour_boundary_before_rounds_to_local_hour_test() {
   let assert Ok(zone) = gtz.build(budapest_iana)
   let instant = timestamp.from_unix_seconds(1_786_624_620)
   let boundary = local_view.hour_boundary_before(instant, zone)
-  let boundary_seconds =
-    timestamp.to_unix_seconds_and_nanoseconds(boundary).0
+  let boundary_seconds = timestamp.to_unix_seconds_and_nanoseconds(boundary).0
   assert boundary_seconds == 1_786_622_400
 }
 
@@ -200,7 +199,6 @@ pub fn hour_boundary_before_at_local_midnight_test() {
   let assert Ok(zone) = gtz.build(budapest_iana)
   let instant = timestamp.from_unix_seconds(1_786_660_200)
   let boundary = local_view.hour_boundary_before(instant, zone)
-  let boundary_seconds =
-    timestamp.to_unix_seconds_and_nanoseconds(boundary).0
+  let boundary_seconds = timestamp.to_unix_seconds_and_nanoseconds(boundary).0
   assert boundary_seconds == 1_786_658_400
 }

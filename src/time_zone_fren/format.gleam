@@ -11,7 +11,10 @@ const time_field_padding: String = "0"
 
 pub fn offset(minutes: Int) -> String {
   let magnitude = int.absolute_value(minutes)
-  "UTC" <> offset_sign(minutes) <> offset_hours(magnitude) <> offset_fraction(magnitude)
+  "UTC"
+  <> offset_sign(minutes)
+  <> offset_hours(magnitude)
+  <> offset_fraction(magnitude)
 }
 
 pub fn time_of_day(time: TimeOfDay) -> String {

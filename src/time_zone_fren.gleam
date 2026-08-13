@@ -125,13 +125,15 @@ fn timeline_view(timeline: Timeline, model: Model) -> Element(Msg) {
     html.div(
       [attribute.class("timeline")],
       list.flatten([
-        list.flatten(list.index_map(model.locations, fn(location, index) {
-          let row_index = index + 1
-          [
-            location_label_view(location, model.selected, row_index),
-            location_strip_row(location, timeline, model.selected, row_index),
-          ]
-        })),
+        list.flatten(
+          list.index_map(model.locations, fn(location, index) {
+            let row_index = index + 1
+            [
+              location_label_view(location, model.selected, row_index),
+              location_strip_row(location, timeline, model.selected, row_index),
+            ]
+          }),
+        ),
         [
           html.div(
             [

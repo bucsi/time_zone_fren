@@ -17,7 +17,13 @@ const days_per_week: Int = 7
 const unix_epoch_weekday: Weekday = Thursday
 
 const week_from_monday: List(Weekday) = [
-  Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday,
+  Monday,
+  Tuesday,
+  Wednesday,
+  Thursday,
+  Friday,
+  Saturday,
+  Sunday,
 ]
 
 pub fn of(instant: Timestamp) -> Weekday {
