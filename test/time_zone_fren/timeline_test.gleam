@@ -86,14 +86,14 @@ pub fn instant_at_negative_position_is_clamped_test() {
 
 pub fn snap_rounds_down_below_halfway_test() {
   let timeline = reference_timeline()
-  let below_halfway = 7.0
+  let below_halfway = pixels_for_minutes(7.0)
   let snapped = timeline |> tl.snapped_instant_at(below_halfway)
   assert_same_instant(snapped, timeline.start)
 }
 
 pub fn snap_rounds_up_at_halfway_test() {
   let timeline = reference_timeline()
-  let at_halfway = 8.0
+  let at_halfway = pixels_for_minutes(8.0)
   let snapped = timeline |> tl.snapped_instant_at(at_halfway)
   assert_same_instant(
     snapped,
@@ -103,10 +103,16 @@ pub fn snap_rounds_up_at_halfway_test() {
 
 pub fn snap_exact_multiple_is_unchanged_test() {
   let timeline = reference_timeline()
-  let three_snap_units = int.to_float(tl.snap_minutes * 3)
-  let snapped = timeline |> tl.snapped_instant_at(three_snap_units)
+  let three_snap_units_in_pixels =
+    pixels_for_minutes(int.to_float(tl.snap_minutes * 3))
+  let snapped =
+    timeline |> tl.snapped_instant_at(three_snap_units_in_pixels)
   assert_same_instant(
     snapped,
     timestamp.add(timeline.start, duration.minutes(tl.snap_minutes * 3)),
   )
+}
+
+fn pixels_for_minutes(minutes: Float) -> Float {
+  minutes *. int.to_float(tl.timeline_width_px) /. 1440.0
 }

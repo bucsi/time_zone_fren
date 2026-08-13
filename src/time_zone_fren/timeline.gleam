@@ -12,7 +12,7 @@ const window_hours: Int = 24
 const total_minutes: Int = 1440
 
 @internal
-pub const timeline_width_px: Int = 1440
+pub const timeline_width_px: Int = 1000
 
 @internal
 pub const snap_minutes: Int = 15

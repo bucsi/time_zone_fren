@@ -4,7 +4,7 @@
 
 .timeline {
   display: grid;
-  grid-template-columns: 12em 1440px;
+  grid-template-columns: 12em 1000px;
   grid-auto-rows: minmax(4em, auto);
   align-items: stretch;
   position: relative;
