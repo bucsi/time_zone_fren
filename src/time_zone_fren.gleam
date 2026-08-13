@@ -259,8 +259,30 @@ fn location_strip_row(
       attribute.style("grid-row", int.to_string(row_index)),
       event.on("click", select_at_decoder()),
     ],
-    working_hours_bands(location, timeline),
+    list.append(
+      working_hours_bands(location, timeline),
+      local_hour_labels(location, timeline),
+    ),
   )
+}
+
+fn local_hour_labels(
+  location: Location,
+  timeline: Timeline,
+) -> List(Element(Msg)) {
+  hour_offsets()
+  |> list.map(fn(hour_offset) {
+    let instant = hour_offset_to_instant(timeline, hour_offset)
+    let position = timeline |> tl.position_of(instant)
+    let local = local_view.new(instant, location.zone)
+    html.span(
+      [
+        attribute.class("local-hour"),
+        attribute.style("left", pixels(position)),
+      ],
+      [html.text(format_hour_label(local.time.hours))],
+    )
+  })
 }
 
 fn select_at_decoder() -> decode.Decoder(Msg) {

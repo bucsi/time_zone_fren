@@ -52,6 +52,15 @@
   pointer-events: none;
 }
 
+.local-hour {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.85em;
+  color: #444;
+  pointer-events: none;
+}
+
 .cursors-overlay {
   grid-column: 2;
   position: relative;

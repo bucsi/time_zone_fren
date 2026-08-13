@@ -723,6 +723,40 @@ This is a visual refinement, not part of the MVP.
 
 ---
 
+# 25b. Post-MVP: Cell-grid layout
+
+The MVP renders each location row as a continuous strip with a positioned working-hours band and hour-number labels laid on top.
+
+An alternative layout, deferred to post-MVP, is a **cell grid**: each row is a strip of 24 hour-wide cells, and each cell shows the local hour number for that location at that hour of the timeline. Reading a column of five cells gives all five local hours for a single absolute instant.
+
+Concept:
+
+```text
+Budapest │ 22 │ 23 │ 00 │ 01 │ 02 │ 03 │ ...
+Boise    │ 14 │ 15 │ 16 │ 17 │ 18 │ 19 │ ...
+Indy     │ 16 │ 17 │ 18 │ 19 │ 20 │ 21 │ ...
+Montreal │ 16 │ 17 │ 18 │ 19 │ 20 │ 21 │ ...
+London   │ 21 │ 22 │ 23 │ 00 │ 01 │ 02 │ ...
+```
+
+Benefits over the continuous strip:
+
+* Every row carries its own scale, so the top reference-zone hour strip becomes redundant and can be dropped.
+* Working-hours coloring is a per-cell class rather than a positioned band.
+* Weekend distinction becomes cell-based.
+* Snapping is inherent: cells are one hour wide, so selection is always on the hour.
+* The selected-time cursor can be a highlighted column across all rows.
+
+Costs:
+
+* Hour-only selection precision. If sub-hour precision is still wanted, cells could be subdivided visually (four sub-columns per cell).
+* DOM size grows to ~5 × 24 = 120 cell elements.
+* Selected-cursor rendering shifts from an absolutely-positioned line to a grid-column highlight.
+
+This is a proper layout refactor rather than a tweak. It should be introduced deliberately, ideally alongside dynamic cities so the "reference row" concept can also be reconsidered.
+
+---
+
 # 26. Implementation sequence
 
 A coding agent should implement the project in this order:
