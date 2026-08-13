@@ -9,20 +9,18 @@ pub fn main() -> Nil {
   gleeunit.main()
 }
 
-const noon_2026_08_13_utc_seconds: Int = 1_786_939_200
-
 const midnight_2026_08_13_utc_seconds: Int = 1_786_896_000
 
 const midnight_2026_08_14_utc_seconds: Int = 1_786_982_400
 
-const twelve_thirty_seven_2026_08_13_utc_seconds: Int = 1_786_941_420
+const noon_2026_08_13_utc_seconds: Int = 1_786_939_200
 
-fn reference_instant() -> Timestamp {
-  timestamp.from_unix_seconds(noon_2026_08_13_utc_seconds)
+fn reference_start() -> Timestamp {
+  timestamp.from_unix_seconds(midnight_2026_08_13_utc_seconds)
 }
 
 fn reference_timeline() -> Timeline {
-  tl.view(from: reference_instant())
+  tl.view(from: reference_start())
 }
 
 fn instant(unix_seconds: Int) -> Timestamp {
@@ -34,15 +32,10 @@ fn assert_same_instant(a: Timestamp, b: Timestamp) -> Nil {
   Nil
 }
 
-pub fn view_starts_12h_before_test() {
+pub fn view_spans_24h_from_start_test() {
   let timeline = reference_timeline()
   assert_same_instant(timeline.start, instant(midnight_2026_08_13_utc_seconds))
   assert_same_instant(timeline.end, instant(midnight_2026_08_14_utc_seconds))
-}
-
-pub fn view_rounds_down_to_hour_test() {
-  let timeline = tl.view(from: instant(twelve_thirty_seven_2026_08_13_utc_seconds))
-  assert_same_instant(timeline.start, instant(midnight_2026_08_13_utc_seconds))
 }
 
 pub fn position_of_start_is_zero_test() {
@@ -59,7 +52,8 @@ pub fn position_of_end_is_full_width_test() {
 pub fn position_of_midpoint_is_half_width_test() {
   let timeline = reference_timeline()
   let half_width = int.to_float(tl.timeline_width_px) /. 2.0
-  assert timeline |> tl.position_of(reference_instant()) == half_width
+  let midpoint = instant(noon_2026_08_13_utc_seconds)
+  assert timeline |> tl.position_of(midpoint) == half_width
 }
 
 pub fn instant_at_zero_is_start_test() {

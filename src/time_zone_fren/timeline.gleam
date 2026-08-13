@@ -3,10 +3,6 @@ import gleam/int
 import gleam/time/duration
 import gleam/time/timestamp.{type Timestamp}
 
-const seconds_per_hour: Int = 3600
-
-const seconds_per_half_day: Int = 43_200
-
 const window_hours: Int = 24
 
 const total_minutes: Int = 1440
@@ -21,8 +17,7 @@ pub type Timeline {
   Timeline(start: Timestamp, end: Timestamp)
 }
 
-pub fn view(from selected: Timestamp) -> Timeline {
-  let start = start_of_window_around(selected)
+pub fn view(from start: Timestamp) -> Timeline {
   Timeline(start:, end: timestamp.add(start, duration.hours(window_hours)))
 }
 
@@ -46,14 +41,6 @@ pub fn minutes_between(from: Timestamp, to: Timestamp) -> Int {
   let #(seconds, _) =
     duration.to_seconds_and_nanoseconds(timestamp.difference(from, to))
   seconds / 60
-}
-
-fn start_of_window_around(instant: Timestamp) -> Timestamp {
-  let #(instant_seconds, _) = timestamp.to_unix_seconds_and_nanoseconds(instant)
-  let containing_hour_seconds =
-    instant_seconds / seconds_per_hour * seconds_per_hour
-  let window_start_seconds = containing_hour_seconds - seconds_per_half_day
-  timestamp.from_unix_seconds(window_start_seconds)
 }
 
 fn float_to_minute_offset(position: Float) -> Int {

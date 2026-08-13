@@ -4,6 +4,7 @@ import gleam/int
 import gleam/list
 import gleam/time/duration
 import gleam/time/timestamp.{type Timestamp}
+import gtz.{type TimeZone}
 import lustre
 import lustre/attribute
 import lustre/effect.{type Effect}
@@ -20,6 +21,8 @@ import time_zone_fren/weekday
 const tick_interval_ms: Int = 60_000
 
 const recenter_buffer_minutes: Int = 180
+
+const window_center_hours: Int = 12
 
 pub fn main() -> Nil {
   let app = lustre.application(init, update, view)
@@ -52,7 +55,7 @@ fn init(_flags: Nil) -> #(Model, Effect(Msg)) {
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   case msg {
     SelectAt(x) -> {
-      let timeline = tl.view(from: model.focal)
+      let timeline = timeline_for(model)
       let snapped = timeline |> tl.snapped_instant_at(x)
       let new_focal =
         timestamp.add(
@@ -70,6 +73,14 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
       effect.none(),
     )
   }
+}
+
+fn timeline_for(model: Model) -> Timeline {
+  let reference_zone = reference_zone_of(model)
+  let hour_start = local_view.hour_boundary_before(model.focal, reference_zone)
+  let window_start =
+    timestamp.add(hour_start, duration.hours(-window_center_hours))
+  tl.view(from: window_start)
 }
 
 fn edge_shift(timeline: Timeline, instant: Timestamp) -> Int {
@@ -93,8 +104,14 @@ fn tick_every_minute() -> Effect(Msg) {
 }
 
 fn view(model: Model) -> Element(Msg) {
-  let timeline = tl.view(from: model.focal)
-  html.div([], [header_view(), timeline_view(timeline, model)])
+  let timeline = timeline_for(model)
+  let reference_zone = reference_zone_of(model)
+  html.div([], [header_view(), timeline_view(timeline, reference_zone, model)])
+}
+
+fn reference_zone_of(model: Model) -> TimeZone {
+  let assert Ok(first) = list.first(model.locations)
+  first.zone
 }
 
 fn header_view() -> Element(Msg) {
@@ -104,14 +121,18 @@ fn header_view() -> Element(Msg) {
   ])
 }
 
-fn timeline_view(timeline: Timeline, model: Model) -> Element(Msg) {
+fn timeline_view(
+  timeline: Timeline,
+  reference_zone: TimeZone,
+  model: Model,
+) -> Element(Msg) {
   html.div([attribute.class("timeline-scroll")], [
     html.div(
       [attribute.class("timeline")],
       list.flatten([
         [
           html.div([attribute.class("header-spacer")], []),
-          hour_scale_view(timeline),
+          hour_scale_view(timeline, reference_zone),
         ],
         list.flatten(list.index_map(model.locations, fn(location, index) {
           let row_index = index + 2
@@ -140,10 +161,13 @@ fn timeline_view(timeline: Timeline, model: Model) -> Element(Msg) {
   ])
 }
 
-fn hour_scale_view(timeline: Timeline) -> Element(Msg) {
+fn hour_scale_view(
+  timeline: Timeline,
+  reference_zone: TimeZone,
+) -> Element(Msg) {
   html.div(
     [attribute.class("hour-scale"), event.on("click", select_at_decoder())],
-    list.map(hour_tick_positions(timeline), fn(tick) {
+    list.map(hour_tick_positions(timeline, reference_zone), fn(tick) {
       let #(position, label) = tick
       html.span(
         [
@@ -158,12 +182,16 @@ fn hour_scale_view(timeline: Timeline) -> Element(Msg) {
 
 const hours_per_day: Int = 24
 
-fn hour_tick_positions(timeline: Timeline) -> List(#(Float, String)) {
+fn hour_tick_positions(
+  timeline: Timeline,
+  reference_zone: TimeZone,
+) -> List(#(Float, String)) {
   hour_offsets()
   |> list.map(fn(hour_offset) {
     let instant = hour_offset_to_instant(timeline, hour_offset)
     let position = timeline |> tl.position_of(instant)
-    #(position, format_hour_label(hour_offset))
+    let local = local_view.new(instant, reference_zone)
+    #(position, format_hour_label(local.time.hours))
   })
 }
 
@@ -175,10 +203,10 @@ fn hour_offset_to_instant(timeline: Timeline, hour_offset: Int) -> Timestamp {
   timeline |> tl.instant_at(position_at_hour)
 }
 
-fn format_hour_label(hour_offset: Int) -> String {
-  case hour_offset % hours_per_day {
-    hour if hour < 10 -> "0" <> int.to_string(hour)
-    hour -> int.to_string(hour)
+fn format_hour_label(hour: Int) -> String {
+  case hour {
+    h if h < 10 -> "0" <> int.to_string(h)
+    h -> int.to_string(h)
   }
 }
 
