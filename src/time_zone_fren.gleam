@@ -1,19 +1,25 @@
+import gleam/dynamic/decode
 import gleam/float
 import gleam/int
 import gleam/list
 import gleam/time/timestamp.{type Timestamp}
 import lustre
 import lustre/attribute
+import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
+import lustre/event
+import plinth/javascript/global
 import time_zone_fren/format
 import time_zone_fren/local_view.{type LocalView}
 import time_zone_fren/location.{type Location}
 import time_zone_fren/timeline.{type Timeline} as tl
 import time_zone_fren/weekday
 
+const tick_interval_ms: Int = 60_000
+
 pub fn main() -> Nil {
-  let app = lustre.simple(init, update, view)
+  let app = lustre.application(init, update, view)
   let assert Ok(_) = lustre.start(app, "#app", Nil)
   Nil
 }
@@ -23,30 +29,48 @@ pub type Model {
 }
 
 pub type Msg {
-  NoOp
+  SelectAt(x: Float)
+  GoToNow
+  Tick(now: Timestamp)
 }
 
-fn init(_flags: Nil) -> Model {
+fn init(_flags: Nil) -> #(Model, Effect(Msg)) {
   let now = timestamp.system_time()
-  Model(locations: location.defaults(), selected: now, now:)
+  let model = Model(locations: location.defaults(), selected: now, now:)
+  #(model, tick_every_minute())
 }
 
-fn update(model: Model, _msg: Msg) -> Model {
-  model
+fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
+  case msg {
+    SelectAt(x) -> {
+      let timeline = tl.view(from: model.selected)
+      let snapped = timeline |> tl.snapped_instant_at(x)
+      #(Model(..model, selected: snapped), effect.none())
+    }
+    GoToNow -> #(Model(..model, selected: model.now), effect.none())
+    Tick(new_now) -> #(Model(..model, now: new_now), effect.none())
+  }
+}
+
+fn tick_every_minute() -> Effect(Msg) {
+  effect.from(fn(dispatch) {
+    let _ =
+      global.set_interval(tick_interval_ms, fn() {
+        dispatch(Tick(timestamp.system_time()))
+      })
+    Nil
+  })
 }
 
 fn view(model: Model) -> Element(Msg) {
   let timeline = tl.view(from: model.selected)
-  html.div([], [
-    header_view(),
-    timeline_view(timeline, model),
-  ])
+  html.div([], [header_view(), timeline_view(timeline, model)])
 }
 
 fn header_view() -> Element(Msg) {
   html.header([], [
     html.h1([], [html.text("Time Zone Fren")]),
-    html.button([], [html.text("Now")]),
+    html.button([event.on_click(GoToNow)], [html.text("Now")]),
   ])
 }
 
@@ -88,7 +112,7 @@ fn timeline_view(timeline: Timeline, model: Model) -> Element(Msg) {
 
 fn hour_scale_view(timeline: Timeline) -> Element(Msg) {
   html.div(
-    [attribute.class("hour-scale")],
+    [attribute.class("hour-scale"), event.on("click", select_at_decoder())],
     list.map(hour_tick_positions(timeline), fn(tick) {
       let #(position, label) = tick
       html.span(
@@ -175,9 +199,14 @@ fn location_strip_row(
     [
       attribute.class(strip_classes(selected_local)),
       attribute.style("grid-row", int.to_string(row_index)),
+      event.on("click", select_at_decoder()),
     ],
     working_hours_bands(location, timeline),
   )
+}
+
+fn select_at_decoder() -> decode.Decoder(Msg) {
+  decode.at(["offsetX"], decode.float) |> decode.map(SelectAt)
 }
 
 fn strip_classes(selected_local: LocalView) -> String {
