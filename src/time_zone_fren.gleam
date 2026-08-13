@@ -105,8 +105,7 @@ fn tick_every_minute() -> Effect(Msg) {
 
 fn view(model: Model) -> Element(Msg) {
   let timeline = timeline_for(model)
-  let reference_zone = reference_zone_of(model)
-  html.div([], [header_view(), timeline_view(timeline, reference_zone, model)])
+  html.div([], [header_view(), timeline_view(timeline, model)])
 }
 
 fn reference_zone_of(model: Model) -> TimeZone {
@@ -121,21 +120,13 @@ fn header_view() -> Element(Msg) {
   ])
 }
 
-fn timeline_view(
-  timeline: Timeline,
-  reference_zone: TimeZone,
-  model: Model,
-) -> Element(Msg) {
+fn timeline_view(timeline: Timeline, model: Model) -> Element(Msg) {
   html.div([attribute.class("timeline-scroll")], [
     html.div(
       [attribute.class("timeline")],
       list.flatten([
-        [
-          html.div([attribute.class("header-spacer")], []),
-          hour_scale_view(timeline, reference_zone),
-        ],
         list.flatten(list.index_map(model.locations, fn(location, index) {
-          let row_index = index + 2
+          let row_index = index + 1
           [
             location_label_view(location, model.selected, row_index),
             location_strip_row(location, timeline, model.selected, row_index),
@@ -147,7 +138,7 @@ fn timeline_view(
               attribute.class("cursors-overlay"),
               attribute.style(
                 "grid-row",
-                "2 / span " <> int.to_string(list.length(model.locations)),
+                "1 / span " <> int.to_string(list.length(model.locations)),
               ),
             ],
             [
@@ -161,39 +152,7 @@ fn timeline_view(
   ])
 }
 
-fn hour_scale_view(
-  timeline: Timeline,
-  reference_zone: TimeZone,
-) -> Element(Msg) {
-  html.div(
-    [attribute.class("hour-scale"), event.on("click", select_at_decoder())],
-    list.map(hour_tick_positions(timeline, reference_zone), fn(tick) {
-      let #(position, label) = tick
-      html.span(
-        [
-          attribute.class("hour-tick"),
-          attribute.style("left", pixels(position)),
-        ],
-        [html.text(label)],
-      )
-    }),
-  )
-}
-
 const hours_per_day: Int = 24
-
-fn hour_tick_positions(
-  timeline: Timeline,
-  reference_zone: TimeZone,
-) -> List(#(Float, String)) {
-  hour_offsets()
-  |> list.map(fn(hour_offset) {
-    let instant = hour_offset_to_instant(timeline, hour_offset)
-    let position = timeline |> tl.position_of(instant)
-    let local = local_view.new(instant, reference_zone)
-    #(position, format_hour_label(local.time.hours))
-  })
-}
 
 fn hour_offset_to_instant(timeline: Timeline, hour_offset: Int) -> Timestamp {
   let position_at_hour =
