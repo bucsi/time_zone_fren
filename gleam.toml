@@ -2,11 +2,18 @@ name = "time_zone_fren"
 version = "1.0.0"
 target = "javascript"
 
+[tools.lustre.bin]
+bun = "system"
+
+[tools.lustre.html]
+stylesheets = [{ href = "style.css" }]
+
 [dependencies]
 gleam_stdlib = ">= 1.0.0 and < 2.0.0"
 gleam_time = ">= 1.0.0 and < 2.0.0"
 lustre = ">= 5.0.0 and < 6.0.0"
-gtz = ">= 1.0.0 and < 2.0.0"
+gtz = { git = "https://github.com/bucsi/gtz", ref = "b92272970220332091e8aa412d4fc08dfe8c1c7b" }
+tzif = { git = "https://github.com/devries/timezone", ref = "d822dc48a231faabbb2bcf07769f1c0f3ad59db3" }
 plinth = ">= 0.5.0 and < 2.0.0"
 
 [dev_dependencies]

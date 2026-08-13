@@ -1,0 +1,75 @@
+.timeline-scroll {
+  overflow-x: auto;
+}
+
+.timeline {
+  display: grid;
+  grid-template-columns: 12em 1440px;
+  grid-auto-rows: minmax(4em, auto);
+  align-items: stretch;
+  position: relative;
+}
+
+.header-spacer {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.hour-scale {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  height: 1.5em;
+}
+
+.hour-tick {
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.location-label {
+  grid-column: 1;
+  padding: 0.25em 0.75em;
+  border-top: 1px solid #ddd;
+}
+
+.location-strip {
+  grid-column: 2;
+  position: relative;
+  background: #f5f5f5;
+  border-top: 1px solid #ddd;
+}
+
+.location-strip.weekend {
+  background: #eee;
+}
+
+.working-hours {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: #d0e4ff;
+}
+
+.cursors-overlay {
+  grid-column: 2;
+  position: relative;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.selected-cursor,
+.now-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+}
+
+.selected-cursor {
+  background: #d00;
+}
+
+.now-marker {
+  background: #0a0;
+}
